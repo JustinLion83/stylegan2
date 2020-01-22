@@ -72,7 +72,12 @@ def fused_bias_act(x, b=None, axis=1, act='linear', alpha=None, gain=None, impl=
 def _fused_bias_act_ref(x, b, axis, act, alpha, gain):
     """Slow reference implementation of `fused_bias_act()` using standard TensorFlow ops."""
 
-    # Validate arguments.
+    # 檢驗一些參數的合法性
+    '''
+    act_spec:要使用哪種激勵函數(預設是lrelu)
+    alpha   :激勵函數用的縮放係數(Ex: lrelu用的alpha是0.2)
+    gain    :He_normal用的標準化學習速率調整(Ex: relu、lrelu用的都是根號2. 其他普遍可以考慮是1.0)
+    '''
     x = tf.convert_to_tensor(x)
     b = tf.convert_to_tensor(b) if b is not None else tf.constant([], dtype=x.dtype)
     act_spec = activation_funcs[act]
@@ -82,7 +87,7 @@ def _fused_bias_act_ref(x, b, axis, act, alpha, gain):
         alpha = act_spec.def_alpha
     if gain is None:
         gain = act_spec.def_gain
-
+        
     # Add bias.
     if b.shape[0] != 0:
         x += tf.reshape(b, [-1 if i == axis else 1 for i in range(x.shape.rank)])
