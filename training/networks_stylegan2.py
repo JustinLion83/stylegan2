@@ -62,15 +62,18 @@ def conv2d_layer(x, fmaps, kernel, up=False, down=False, resample_kernel=None, g
 
 #----------------------------------------------------------------------------
 # Apply bias and activation func.
-
 def apply_bias_act(x, act='linear', alpha=None, gain=None, lrmul=1, bias_var='bias'):
+    '''
+    gain : 預設是會按照所選擇的act函數是甚麼而有所變化, 預設是用lrelu: gain=np.sqrt(2)
+    lrmul: 除了用作解糾纏的全連接區塊(g_mapping), 預設是1.0
+    '''
     b = tf.get_variable(bias_var, shape=[x.shape[1]], initializer=tf.initializers.zeros()) * lrmul
     return fused_bias_act(x, b=tf.cast(b, x.dtype), act=act, alpha=alpha, gain=gain)
 
 #----------------------------------------------------------------------------
 # Naive upsampling (nearest neighbor) and downsampling (average pooling).
-
 def naive_upsample_2d(x, factor=2):
+    '''相當於初代的_upscale2d'''
     with tf.variable_scope('NaiveUpsample'):
         _N, C, H, W = x.shape.as_list()
         x = tf.reshape(x, [-1, C, H, 1, W, 1])
@@ -85,7 +88,6 @@ def naive_downsample_2d(x, factor=2):
 
 #----------------------------------------------------------------------------
 # Modulated convolution layer.
-
 def modulated_conv2d_layer(x, y, fmaps, kernel, up=False, down=False, demodulate=True, resample_kernel=None, gain=1, use_wscale=True, lrmul=1, fused_modconv=True, weight_var='weight', mod_weight_var='mod_weight', mod_bias_var='mod_bias'):
     assert not (up and down)
     assert kernel >= 1 and kernel % 2 == 1
